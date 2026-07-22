@@ -3,10 +3,11 @@ services:
     name: asbl-handover
     runtime: docker
     dockerfilePath: ./Dockerfile
-    disk:
-      name: data
-      mountPath: /var/data          # db.sqlite3 + media/ live here
-      sizeGB: 1
+    plan: free
+    # No disk on the free plan: db.sqlite3 + media/ live in the container's
+    # own (ephemeral) filesystem via settings.py's defaults, and reset on
+    # every restart / redeploy / 15-min-idle spin-down. Demo-only tradeoff —
+    # add a paid plan + disk block back for real, durable inspection data.
     envVars:
       - key: DEBUG
         value: "false"
@@ -14,7 +15,3 @@ services:
         generateValue: true
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
-      - key: DATABASE_PATH
-        value: /var/data/db.sqlite3
-      - key: MEDIA_ROOT
-        value: /var/data/media
