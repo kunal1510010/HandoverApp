@@ -24,6 +24,14 @@ DEBUG = os.environ.get('DEBUG', 'true').lower() != 'false'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# Render auto-populates this with the service's actual onrender.com hostname —
+# trust it directly rather than guessing at ".onrender.com", since Render's
+# own health check may hit the container via a hostname that a hardcoded
+# wildcard doesn't cover, which reads to Render as a failed health check.
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 
 # Application definition
 
