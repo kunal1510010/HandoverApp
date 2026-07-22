@@ -30,7 +30,7 @@ export const CAT_ICON = {
   'Electrical': 'ph ph-lightning',
   'Plumbing': 'ph ph-drop',
   'Granite/Stone': 'ph ph-diamond',
-  'Skirting': 'ph ph-ruler-horizontal',
+  'Skirting': 'ph ph-ruler',
   'Kitchen': 'ph ph-cooking-pot',
   'Balcony': 'ph ph-tree',
 }
@@ -63,6 +63,26 @@ export function freshResponses(rooms, checklist) {
     R[room.key] = {}
     itemsFor(room, checklist).forEach((m) => {
       R[room.key][m.id] = { response: null, skip_reason: '', issues: [] }
+    })
+  })
+  return R
+}
+
+// Same shape as freshResponses, but items also present in `prev` (the last
+// submitted inspection) keep their verified/issue/skipped status and issues
+// — so re-inspecting a flat starts from what was last reported, not blank.
+export function carryForwardResponses(rooms, checklist, prev) {
+  const R = freshResponses(rooms, checklist)
+  rooms.forEach((room) => {
+    const prevRoom = (prev && prev[room.key]) || {}
+    Object.keys(R[room.key]).forEach((itemId) => {
+      const p = prevRoom[itemId]
+      if (!p) return
+      R[room.key][itemId] = {
+        response: p.response,
+        skip_reason: p.skip_reason || '',
+        issues: (p.issues || []).map((iss) => ({ ...iss, fixed: !!iss.fixed })),
+      }
     })
   })
   return R

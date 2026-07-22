@@ -25,6 +25,7 @@ class Flat(models.Model):
     config = models.CharField(max_length=20)
     sqft = models.IntegerField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="handover_ready")
+    floor_plan = models.ImageField(upload_to="floorplans/", blank=True, null=True)
 
     def __str__(self):
         return self.unit_no
@@ -103,6 +104,7 @@ class Issue(models.Model):
     item_response = models.ForeignKey(ItemResponse, related_name="issues", on_delete=models.CASCADE)
     heading = models.CharField(max_length=160)
     exact_location = models.TextField()
+    fixed = models.BooleanField(default=False)
 
 
 class Photo(models.Model):

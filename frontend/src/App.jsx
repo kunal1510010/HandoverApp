@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, getToken, setToken } from './api'
-import { freshResponses } from './checklist'
+import { carryForwardResponses, freshResponses } from './checklist'
 import './App.css'
 
 import Login from './screens/Login'
@@ -23,6 +23,21 @@ const DEFAULT_META = {
 }
 const PENDING_KEY = 'asbl_pending_save'
 
+const ROOM_PREFIX = '/room/'
+const SCREEN_PATH = {
+  login: '/login', notready: '/not-ready', safety: '/safety', confirm: '/confirm',
+  hub: '/hub', review: '/review', pdf: '/pdf', submitted: '/submitted',
+}
+function screenPath(screen, roomKey) {
+  if (screen === 'room') return ROOM_PREFIX + encodeURIComponent(roomKey || '')
+  return SCREEN_PATH[screen] || '/'
+}
+function pathToScreen(pathname) {
+  if (pathname.startsWith(ROOM_PREFIX)) return { screen: 'room', roomKey: decodeURIComponent(pathname.slice(ROOM_PREFIX.length)) }
+  const entry = Object.entries(SCREEN_PATH).find(([, path]) => path === pathname)
+  return { screen: entry ? entry[0] : null }
+}
+
 export default function App() {
   const [screen, setScreen] = useState('login')
   const [booting, setBooting] = useState(true)
@@ -41,6 +56,7 @@ export default function App() {
   const [checklist, setChecklist] = useState(null)
   const [inspectionId, setInspectionId] = useState(null)
   const [hasDraft, setHasDraft] = useState(false)
+  const [lastSubmitted, setLastSubmitted] = useState(false)
   const [responses, setResponses] = useState({})
   const [meta, setMeta] = useState(DEFAULT_META)
   const [customerSigned, setCustomerSigned] = useState(false)
@@ -59,6 +75,12 @@ export default function App() {
 
   const [pdfVariant, setPdfVariant] = useState('issues')
   const [reportUrl, setReportUrl] = useState('')
+
+  function nav(screen, roomKey) {
+    setScreen(screen)
+    const path = screenPath(screen, roomKey)
+    if (window.location.pathname !== path) window.history.pushState({}, '', path)
+  }
 
   const toastTimer = useRef(null)
   function toast_(msg) {
@@ -89,27 +111,55 @@ export default function App() {
   }
 
   // Bootstrap: resume a session if a token is already stored (re-open of the app).
+  // Restores the screen the user was actually on (from the URL) instead of
+  // always forcing the safety acknowledgement back up on every reload.
   useEffect(() => {
     const token = getToken()
     if (!token) { setBooting(false); return }
+    const { screen: urlScreen, roomKey: urlRoomKey } = pathToScreen(window.location.pathname)
     api.getUnit()
       .then(async (u) => {
         setUnit(u)
-        if (u.status === 'not_ready') { setScreen('notready'); return }
+        if (u.status === 'not_ready') { nav('notready'); return }
         const [cl, insp] = await Promise.all([api.getChecklist(), api.getInspection()])
         setChecklist(cl)
         applyInspection(insp)
         setSafetyNext('confirm')
-        setScreen('safety')
+        if (urlScreen === 'room') {
+          const room = u.rooms.find((r) => r.key === urlRoomKey)
+          if (room) { setActiveRoom(room.key); nav('room', room.key); return }
+          nav('hub'); return
+        }
+        if (urlScreen && urlScreen !== 'login') { nav(urlScreen); return }
+        nav('safety')
       })
       .catch(() => setToken(null))
       .finally(() => setBooting(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Back/forward navigation.
+  useEffect(() => {
+    function onPop() {
+      const { screen: s, roomKey } = pathToScreen(window.location.pathname)
+      if (!s || !unit) return
+      if (s === 'room') {
+        const room = unit.rooms.find((r) => r.key === roomKey)
+        if (!room) return
+        setActiveRoom(room.key); setOpenCats({})
+      }
+      setScreen(s)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [unit])
 
   function applyInspection(insp) {
     if (insp) {
       setInspectionId(insp.id)
-      setHasDraft(true)
+      setHasDraft(insp.status === 'in_progress')
+      setLastSubmitted(insp.status === 'submitted')
+      if (insp.status === 'submitted') setReportUrl(`/api/inspection/${insp.id}/report.pdf`)
       setResponses(insp.responses)
       setMeta({
         inspector_name: insp.meta.inspector_name || '',
@@ -123,6 +173,7 @@ export default function App() {
     } else {
       setInspectionId(null)
       setHasDraft(false)
+      setLastSubmitted(false)
       setResponses({})
       setMeta(DEFAULT_META)
       setCustomerSigned(false)
@@ -164,24 +215,24 @@ export default function App() {
         setOtpError('')
         const u = await api.getUnit()
         setUnit(u)
-        if (u.status === 'not_ready') { setScreen('notready'); return }
+        if (u.status === 'not_ready') { nav('notready'); return }
         const [cl, insp] = await Promise.all([api.getChecklist(), api.getInspection()])
         setChecklist(cl)
         applyInspection(insp)
         setSafetyNext('confirm')
         setSafety({ helmet: false, vest: false, aware: false })
-        setScreen('safety')
+        nav('safety')
       })
       .catch((e) => setOtpError(e.message || 'Incorrect OTP.'))
   }
   function goDemo() {
     setSafetyNext('demo')
     setSafety({ helmet: false, vest: false, aware: false })
-    setScreen('safety')
+    nav('safety')
   }
   function goLogin() {
     setToken(null)
-    setScreen('login')
+    nav('login')
     setOtpSent(false); setOtp(''); setCust(''); setOtpError('')
   }
 
@@ -189,20 +240,21 @@ export default function App() {
   function safetyContinue() {
     if (!(safety.helmet && safety.vest && safety.aware)) { toast_('Acknowledge all items first'); return }
     if (safetyNext === 'demo') { goLogin(); toast_('Safety acknowledged · demo visit recorded'); return }
-    setScreen('confirm')
+    nav('confirm')
   }
 
   // ---- confirm ----
   function beginInspection() {
-    const fresh = freshResponses(unit.rooms, checklist)
+    const fresh = lastSubmitted ? carryForwardResponses(unit.rooms, checklist, responses) : freshResponses(unit.rooms, checklist)
     api.createInspection({ responses: fresh, meta: DEFAULT_META }).then((insp) => {
       setInspectionId(insp.id)
       setHasDraft(true)
+      setLastSubmitted(false)
       setResponses(insp.responses)
       setMeta(DEFAULT_META)
       setCustomerSigned(false)
       setInspectorSigned(false)
-      setScreen('hub')
+      nav('hub')
     })
   }
 
@@ -224,6 +276,15 @@ export default function App() {
       const cell = { ...R[roomKey][itemId] }
       cell.issues = cell.issues.filter((_, i) => i !== index)
       if (!cell.issues.length) cell.response = 'VERIFIED'
+      R[roomKey][itemId] = cell
+      return R
+    })
+  }
+  function toggleIssueFixed(roomKey, itemId, index) {
+    setResponses((prev) => {
+      const R = { ...prev, [roomKey]: { ...prev[roomKey] } }
+      const cell = { ...R[roomKey][itemId] }
+      cell.issues = cell.issues.map((iss, i) => i === index ? { ...iss, fixed: !iss.fixed } : iss)
       R[roomKey][itemId] = cell
       return R
     })
@@ -286,12 +347,14 @@ export default function App() {
   // ---- review / pdf / submit ----
   function generateReport(totalIssues) {
     setPdfVariant(totalIssues > 0 ? 'issues' : 'zero')
-    setScreen('pdf')
+    nav('pdf')
   }
   function finishReport() {
     api.submitInspection(inspectionId).then(({ report_url }) => {
       setReportUrl(report_url)
-      setScreen('submitted')
+      setHasDraft(false)
+      setLastSubmitted(true)
+      nav('submitted')
       toast_('Report submitted')
     })
   }
@@ -301,7 +364,7 @@ export default function App() {
   return (
     <div className="app-shell">
       {offline && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#141B2D', color: '#fff', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#0D0D0D', color: '#fff', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>
           <i className="ph ph-cloud-slash" style={{ fontSize: 15 }} />
           <span style={{ flex: 1 }}>Offline — saved locally, will sync</span>
         </div>
@@ -309,39 +372,40 @@ export default function App() {
 
       {screen === 'login' && (
         <Login cust={cust} setCust={setCust} otp={otp} setOtp={setOtp} otpSent={otpSent} otpError={otpError}
-          sendOtp={sendOtp} verifyOtp={verifyOtp} onNotReady={() => setScreen('notready')} />
+          sendOtp={sendOtp} verifyOtp={verifyOtp} />
       )}
       {screen === 'notready' && <NotReady goLogin={goLogin} goDemo={goDemo} unitNo={unit ? unit.unit_no : ''} />}
       {screen === 'safety' && <Safety safety={safety} setSafety={setSafety} onBack={goLogin} onContinue={safetyContinue} />}
       {screen === 'confirm' && unit && (
-        <Confirm unit={unit} hasDraft={hasDraft} checklist={checklist} responses={responses}
-          onResume={() => setScreen('hub')} onStart={beginInspection} onStartOver={beginInspection} />
+        <Confirm unit={unit} hasDraft={hasDraft} lastSubmitted={lastSubmitted} reportUrl={reportUrl}
+          checklist={checklist} responses={responses} onNotReady={() => nav('notready')}
+          onResume={() => nav('hub')} onStart={beginInspection} onStartOver={beginInspection} />
       )}
       {screen === 'hub' && unit && (
         <Hub unit={unit} checklist={checklist} responses={responses} offline={offline}
-          onOpenRoom={(key) => { setActiveRoom(key); setOpenCats({}); setScreen('room') }}
-          onReview={() => setScreen('review')} />
+          onOpenRoom={(key) => { setActiveRoom(key); setOpenCats({}); nav('room', key) }}
+          onReview={() => nav('review')} />
       )}
       {screen === 'room' && unit && (
         <Room unit={unit} checklist={checklist} responses={responses} activeRoom={activeRoom}
           openCats={openCats} setOpenCats={setOpenCats} editItem={editItem} setEditItem={setEditItem}
-          onBack={() => setScreen('hub')} setResp={setResp} onRaise={openSheet}
-          onNextRoom={(key) => { setActiveRoom(key); setOpenCats({}) }} />
+          onBack={() => nav('hub')} setResp={setResp} onRaise={openSheet} onToggleFixed={toggleIssueFixed}
+          onNextRoom={(key) => { setActiveRoom(key); setOpenCats({}); nav('room', key) }} />
       )}
       {screen === 'review' && unit && (
         <Review unit={unit} checklist={checklist} responses={responses} meta={meta} setMeta={setMeta}
           customerSigned={customerSigned} setCustomerSigned={setCustomerSigned}
           inspectorSigned={inspectorSigned} setInspectorSigned={setInspectorSigned}
-          onBack={() => setScreen('hub')} onDeleteIssue={deleteIssue} onGenerate={generateReport} />
+          onBack={() => nav('hub')} onDeleteIssue={deleteIssue} onToggleFixed={toggleIssueFixed} onGenerate={generateReport} />
       )}
       {screen === 'pdf' && unit && (
         <Pdf unit={unit} checklist={checklist} responses={responses} meta={meta} pdfVariant={pdfVariant}
           customerSigned={customerSigned} inspectorSigned={inspectorSigned} inspectionId={inspectionId}
-          onBack={() => setScreen('review')} onShare={() => toast_('Share link copied')} onFinish={finishReport} />
+          onBack={() => nav('review')} onShare={() => toast_('Share link copied')} onFinish={finishReport} />
       )}
       {screen === 'submitted' && unit && (
         <Submitted unit={unit} checklist={checklist} responses={responses} meta={meta} reportUrl={reportUrl}
-          onDone={goLogin} />
+          onDone={() => nav('confirm')} />
       )}
 
       {sheet.open && (
@@ -353,7 +417,7 @@ export default function App() {
       )}
 
       {toast && (
-        <div style={{ position: 'absolute', left: '50%', bottom: 78, transform: 'translateX(-50%)', zIndex: 30, background: '#141B2D', color: '#fff', fontSize: 13, fontWeight: 600, padding: '11px 18px', borderRadius: 12, whiteSpace: 'nowrap', boxShadow: '0 8px 24px rgba(0,0,0,.25)', animation: 'fade .2s ease' }}>
+        <div style={{ position: 'absolute', left: '50%', bottom: 78, transform: 'translateX(-50%)', zIndex: 30, background: '#0D0D0D', color: '#fff', fontSize: 13, fontWeight: 600, padding: '11px 18px', borderRadius: 12, whiteSpace: 'nowrap', boxShadow: '0 8px 24px rgba(0,0,0,.25)', animation: 'fade .2s ease' }}>
           {toast}
         </div>
       )}

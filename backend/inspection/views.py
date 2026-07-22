@@ -100,6 +100,7 @@ def _sync_responses(inspection, responses):
                     item_response=item_response,
                     heading=issue_data.get("heading", ""),
                     exact_location=issue_data.get("exact_location", ""),
+                    fixed=bool(issue_data.get("fixed")),
                 )
                 for url in issue_data.get("photos", []):
                     name = url[len(media_prefix):] if url.startswith(media_prefix) else url
@@ -113,7 +114,11 @@ def inspection_draft(request):
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
     if request.method == "GET":
-        inspection = Inspection.objects.filter(flat=flat, status="in_progress").first()
+        # In-progress draft takes priority; otherwise fall back to the most
+        # recently submitted one so the app can offer "download report"
+        # instead of forcing a fresh OTP login every time.
+        inspection = Inspection.objects.filter(flat=flat, status="in_progress").first() \
+            or Inspection.objects.filter(flat=flat, status="submitted").order_by("-updated_at").first()
         return Response(serialize_inspection(inspection) if inspection else None)
 
     # POST: idempotent create/replace of the flat's one active draft.

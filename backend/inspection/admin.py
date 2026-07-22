@@ -5,7 +5,7 @@ from .models import ChecklistItem, Flat, Inspection, Issue, ItemResponse, Photo,
 
 @admin.register(Flat)
 class FlatAdmin(admin.ModelAdmin):
-    list_display = ("unit_no", "customer_number", "customer_name", "config", "status")
+    list_display = ("unit_no", "customer_number", "customer_name", "config", "status", "floor_plan")
 
 
 admin.site.register(Room)

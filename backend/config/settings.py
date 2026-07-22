@@ -24,6 +24,9 @@ DEBUG = os.environ.get('DEBUG', 'true').lower() != 'false'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# ALLOWED_HOSTS = ['*']
+
+
 # Render auto-populates this with the service's actual onrender.com hostname —
 # trust it directly rather than guessing at ".onrender.com", since Render's
 # own health check may hit the container via a hostname that a hardcoded
@@ -134,5 +137,12 @@ STORAGES = {
 # Uploaded photos (local disk, served at /media/)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.environ.get('MEDIA_ROOT', BASE_DIR / 'media')
+
+# API auth is a custom bearer token scheme (see inspection.views._authenticate),
+# not Django sessions — disable DRF's SessionAuthentication so a stray admin
+# session cookie doesn't route API requests through session CSRF enforcement.
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

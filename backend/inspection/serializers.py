@@ -19,6 +19,7 @@ def serialize_unit(flat):
         "config": flat.config,
         "sqft": flat.sqft,
         "status": flat.status,
+        "floor_plan": flat.floor_plan.url if flat.floor_plan else None,
         "rooms": [serialize_room(r) for r in flat.rooms.order_by("order")],
     }
 
@@ -38,6 +39,7 @@ def serialize_issue(issue):
         "heading": issue.heading,
         "exact_location": issue.exact_location,
         "photos": [p.image.url for p in issue.photos.all()],
+        "fixed": issue.fixed,
     }
 
 

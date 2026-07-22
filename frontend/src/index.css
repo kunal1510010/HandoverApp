@@ -5,16 +5,16 @@ html, body, #root {
   margin: 0;
   height: 100%;
   background: #eceff3;
-  font-family: Inter, system-ui, sans-serif;
+  font-family: 'Nunito Sans', system-ui, sans-serif;
 }
 a {
-  color: #EA4E20;
+  color: #F04E38;
 }
 a:hover {
-  color: #D9600A;
+  color: #D93F2B;
 }
 input, textarea, button {
-  font-family: Inter, system-ui, sans-serif;
+  font-family: 'Nunito Sans', system-ui, sans-serif;
 }
 input::placeholder, textarea::placeholder {
   font-weight: 400;
@@ -30,4 +30,16 @@ input::placeholder, textarea::placeholder {
 @keyframes fade {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+.cat-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .5s cubic-bezier(.2,.8,.2,1);
+}
+.cat-collapse.open {
+  grid-template-rows: 1fr;
+}
+.cat-collapse > div {
+  overflow: hidden;
+  min-height: 0;
 }
