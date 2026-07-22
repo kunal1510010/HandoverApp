@@ -1,0 +1,33 @@
+* {
+  box-sizing: border-box;
+}
+html, body, #root {
+  margin: 0;
+  height: 100%;
+  background: #eceff3;
+  font-family: Inter, system-ui, sans-serif;
+}
+a {
+  color: #EA4E20;
+}
+a:hover {
+  color: #D9600A;
+}
+input, textarea, button {
+  font-family: Inter, system-ui, sans-serif;
+}
+input::placeholder, textarea::placeholder {
+  font-weight: 400;
+  color: #AAB2BE;
+}
+.scrl::-webkit-scrollbar {
+  width: 0;
+}
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

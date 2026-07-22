@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: asbl-handover
+    runtime: python
+    buildCommand: ./build.sh
+    startCommand: cd backend && gunicorn config.wsgi:application
+    disk:
+      name: data
+      mountPath: /var/data          # db.sqlite3 + media/ live here
+      sizeGB: 1
+    envVars:
+      - key: DEBUG
+        value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DATABASE_PATH
+        value: /var/data/db.sqlite3
+      - key: MEDIA_ROOT
+        value: /var/data/media

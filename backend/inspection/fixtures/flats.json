@@ -1,0 +1,5 @@
+[
+  {"model": "inspection.flat", "pk": 1, "fields": {"customer_number": "8247883838", "customer_name": "Ratna Kumar Mandava", "email": "asvin.j@live.in", "project": "ASBL Spectra", "product": "SPECTRA", "tower": "B", "unit_no": "B-3805", "config": "3BHK", "sqft": 2210, "status": "handover_ready"}},
+  {"model": "inspection.flat", "pk": 2, "fields": {"customer_number": "9876543210", "customer_name": "Priya Sharma", "email": "priya.sharma@example.com", "project": "ASBL Spectra", "product": "SPECTRA", "tower": "A", "unit_no": "A-1204", "config": "2BHK", "sqft": 1450, "status": "handover_ready"}},
+  {"model": "inspection.flat", "pk": 3, "fields": {"customer_number": "9123456780", "customer_name": "Arjun Rao", "email": "arjun.rao@example.com", "project": "ASBL Spectra", "product": "SPECTRA", "tower": "C", "unit_no": "C-2201", "config": "3BHK", "sqft": 1980, "status": "not_ready"}}
+]
