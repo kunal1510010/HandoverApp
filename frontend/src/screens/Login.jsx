@@ -1,8 +1,9 @@
 import asblLogo from '../assets/Nav-black-logo.svg'
+import floorPlanBg from '../assets/281-2812459_floor-plan-png-download-floor-plan-transparent-background.png'
 
 const HOW_IT_WORKS = [
   { icon: 'ph-fill ph-shield-check', text: "Verified Checklist" },
-  { icon: 'ph-fill ph-person-simple-walk', text: 'Simplifies Issue Reporting' },
+  { icon: 'ph-fill ph-person-simple-walk', text: 'Simplified Issue Reporting' },
   { icon: 'ph-fill ph-file-text', text: 'Instant Report Generation' },
 ]
 
@@ -13,21 +14,29 @@ export default function Login({ cust, setCust, otp, setOtp, otpSent, otpError, s
   }
   return (
     <div className="scrl" style={{
+      position: 'relative', zIndex: 0,
       flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', padding: '28px 24px 24px', animation: 'fade .25s ease',
       backgroundColor: '#fff',
-      backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(240,78,56,.16), rgba(240,78,56,0) 70%)',
+      // backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(240,78,56,.16), rgba(240,78,56,0) 50%)',
     }}>
-      <div style={{ marginBottom: 40 }}>
+      <div style={{ position: 'absolute', inset: 0, zIndex: -1, overflow: 'hidden', pointerEvents: 'none' }}>
+        <img src={floorPlanBg} alt="" style={{ position: 'absolute', top: '-10%', right: '-30%', width: '100%', height: '70%', opacity: 0.05 }} />
+      </div>
+       <div style={{ marginBottom: 40 }}>
         {/* <img src={asblLogo} alt="ASBL" style={{ height: 15 }} /> */}
       </div>
+
       <div style={{ width: 72, height: 72, borderRadius: 20, background: '#FDEBD9', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22 }}>
         <i className="ph-fill ph-house-line" style={{ fontSize: 38, color: '#F04E38' }} />
       </div>
-      <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', lineHeight: 1.15, marginBottom: 16}}> <img src={asblLogo} alt="ASBL" style={{ height: 12 , marginBottom: 5}} /><br />Pravesh</div>
-      <div style={{ fontSize: 14, color: '#667085', lineHeight: 1.5, marginBottom: 28 }}>Please enter customer's registered number to begin the guided inspection.</div>
+      <div style={{ marginBottom: 16 }}>
+        <img src={asblLogo} alt="ASBL" style={{ height: 14, display: 'block', marginBottom: 3 }} />
+        <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 36, fontWeight: 400, letterSpacing: '.02em', color: '#0D0D0D', lineHeight: 1 }}>PRAVESH</div>
+      </div>
+      <div style={{ fontSize: 14, color: '#667085', lineHeight: 1.5, marginBottom: 10 }}>Please enter customer's registered number to begin the guided inspection.</div>
 
       <label style={{ fontSize: 12, fontWeight: 600, color: '#667085', marginBottom: 7, display: 'block' }}>Customer number</label>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid #EAECF0', borderRadius: 12, padding: '0 14px', height: 52, marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid #EAECF0', borderRadius: 12, padding: '0 14px', height: 52, marginBottom: 24 }}>
         <i className="ph ph-phone" style={{ fontSize: 19, color: '#667085' }} />
         <input value={cust} onChange={(e) => setCust(e.target.value)} inputMode="numeric" placeholder="e.g. 8247883838"
           style={{ flex: 1, border: 0, outline: 0, fontSize: 16, fontWeight: 500, color: '#0D0D0D', background: 'transparent' }} />
