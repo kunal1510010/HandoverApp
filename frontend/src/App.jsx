@@ -349,10 +349,11 @@ export default function App() {
     nav('pdf')
   }
   function finishReport() {
-    api.submitInspection(inspectionId).then(({ report_url }) => {
+    api.submitInspection(inspectionId).then(({ report_url, flat_status }) => {
       setReportUrl(report_url)
       setHasDraft(false)
       setLastSubmitted(true)
+      setUnit((u) => ({ ...u, status: flat_status }))
       nav('submitted')
       toast_('Report submitted')
     })

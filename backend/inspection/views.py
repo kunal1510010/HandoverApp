@@ -176,7 +176,7 @@ def inspection_submit(request, pk):
         inspection.status = "submitted"
         inspection.save()
 
-    return Response({"report_url": f"/api/inspection/{inspection.id}/report.pdf"})
+    return Response({"report_url": f"/api/inspection/{inspection.id}/report.pdf", "flat_status": flat.status})
 
 
 @api_view(["GET"])
