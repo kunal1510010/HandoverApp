@@ -12,7 +12,7 @@ class Flat(models.Model):
         ("handover_ready", "handover_ready"),
         ("not_ready", "not_ready"),
         ("issues", "issues"),
-        ("clear", "clear"),
+        ("handed_over", "handed_over"),
     ]
 
     customer_number = models.CharField(max_length=15, unique=True)
@@ -26,6 +26,14 @@ class Flat(models.Model):
     sqft = models.IntegerField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="handover_ready")
     floor_plan = models.ImageField(upload_to="floorplans/", blank=True, null=True)
+
+    # Defaults used to prepopulate a new Inspection's report fields below;
+    # editing an inspection's copy does not write back here.
+    inspector_name = models.CharField(max_length=120, blank=True)
+    inspector_contact = models.CharField(max_length=20, blank=True)
+    company = models.CharField(max_length=120, blank=True)
+    fm_name = models.CharField(max_length=120, blank=True)
+    inspection_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return self.unit_no
@@ -78,9 +86,7 @@ class Inspection(models.Model):
     inspector_contact = models.CharField(max_length=20, blank=True)
     company = models.CharField(max_length=120, blank=True)
     fm_name = models.CharField(max_length=120, blank=True)
-    fm_contact = models.CharField(max_length=20, blank=True)
     inspection_date = models.DateField(null=True, blank=True)
-    expected_resolution_date = models.DateField(null=True, blank=True)
     customer_signed = models.BooleanField(default=False)
     inspector_signed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

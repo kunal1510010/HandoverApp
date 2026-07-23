@@ -2,8 +2,17 @@ import { useState } from 'react'
 import { roomStat } from '../checklist'
 import FloorPlanModal from './FloorPlanModal'
 
+const STATUS_META = {
+  handover_ready: { label: 'HANDOVER READY', fg: '#5FE3A9', bg: 'rgba(31,169,113,.18)' },
+  handed_over: { label: 'HANDED OVER', fg: '#5FE3A9', bg: 'rgba(31,169,113,.18)' },
+  issues: { label: 'ISSUES RAISED', fg: '#FF9C8A', bg: 'rgba(240,78,56,.18)' },
+  not_ready: { label: 'NOT READY', fg: '#F6C177', bg: 'rgba(234,122,30,.18)' },
+}
+
 export default function Confirm({ unit, hasDraft, lastSubmitted, reportUrl, checklist, responses, onResume, onStart, onStartOver, onNotReady }) {
   const [zoomOpen, setZoomOpen] = useState(false)
+  const statusMeta = STATUS_META[unit.status] || STATUS_META.handover_ready
+  const canReinspect = unit.status === 'issues'
   const rows = [
     { k: 'Customer', v: unit.customer_name },
     { k: 'Configuration', v: unit.config },
@@ -28,15 +37,15 @@ export default function Confirm({ unit, hasDraft, lastSubmitted, reportUrl, chec
         <div style={{ background: '#0D0D0D', padding: '14px 18px', color: '#fff' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-.01em' }}>{unit.unit_no}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(31,169,113,.18)', color: '#5FE3A9', fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 9999 }}>
-              <span style={{ width: 6, height: 6, borderRadius: 9999, background: '#5FE3A9' }} />HANDOVER READY
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: statusMeta.bg, color: statusMeta.fg, fontSize: 10, fontWeight: 700, padding: '4px 9px', borderRadius: 9999 }}>
+              <span style={{ width: 6, height: 6, borderRadius: 9999, background: statusMeta.fg }} />{statusMeta.label}
             </div>
           </div>
           <div style={{ fontSize: 12, color: '#B7C0D4', marginTop: 3 }}>{unit.project} · Tower {unit.tower}</div>
         </div>
         <div style={{ padding: '2px 18px 4px' }}>
-          {rows.map((r) => (
-            <div key={r.k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid #EAECF0' }}>
+          {rows.map((r, i) => (
+            <div key={r.k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: i < rows.length - 1 ? '1px solid #EAECF0' : 'none' }}>
               <span style={{ fontSize: 12, color: '#667085' }}>{r.k}</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#0D0D0D' }}>{r.v}</span>
             </div>
@@ -60,10 +69,12 @@ export default function Confirm({ unit, hasDraft, lastSubmitted, reportUrl, chec
       {zoomOpen && <FloorPlanModal src={unit.floor_plan} onClose={() => setZoomOpen(false)} />}
       {lastSubmitted ? (
         <>
-          <button className="btn-primary" style={{ marginTop: 14 }} onClick={onStart}>
-            <i className="ph ph-arrow-clockwise" />Initiate re-inspection
-          </button>
-          <a href={reportUrl} target="_blank" rel="noreferrer" className="btn-secondary" style={{ marginTop: 8, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          {canReinspect && (
+            <button className="btn-primary" style={{ marginTop: 14 }} onClick={onStart}>
+              <i className="ph ph-arrow-clockwise" />Initiate re-inspection
+            </button>
+          )}
+          <a href={reportUrl} target="_blank" rel="noreferrer" className="btn-secondary" style={{ marginTop: canReinspect ? 8 : 14, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <i className="ph ph-file-text" />Download report
           </a>
         </>

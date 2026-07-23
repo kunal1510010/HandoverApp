@@ -9,7 +9,6 @@ export default function Submitted({ unit, checklist, responses, meta, reportUrl,
   const summary = [
     { label: 'Inspection date', value: meta.inspection_date || '—' },
     { label: 'Inspected by', value: meta.inspector_name || '—' },
-    { label: 'Expected resolution', value: meta.expected_resolution_date || '—' },
   ]
 
   return (

@@ -77,7 +77,12 @@ export default function Room({ unit, checklist, responses, activeRoom, openCats,
           const key = room.key + ':' + cat
           const open = openCats[key] !== undefined ? openCats[key] : catIdx === 0
           let done = 0
-          gitems.forEach((m) => { if (cells[m.id] && cells[m.id].response) done++ })
+          let issueCount = 0
+          gitems.forEach((m) => {
+            const c = cells[m.id]
+            if (c && c.response) done++
+            if (c) issueCount += c.issues.length
+          })
           return (
             <div key={cat} style={{ marginBottom: 6 }}>
               <div onClick={() => setOpenCats((x) => ({ ...x, [key]: !(x[key] !== undefined ? x[key] : catIdx === 0) }))}
@@ -86,6 +91,9 @@ export default function Room({ unit, checklist, responses, activeRoom, openCats,
                   <i className={CAT_ICON[cat] || 'ph ph-check-square'} style={{ fontSize: 17, color: '#5A6478' }} />
                 </div>
                 <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#0D0D0D' }}>{cat}</span>
+                {issueCount > 0 && (
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#D93F2B', background: '#FDEBD9', padding: '3px 8px', borderRadius: 9999 }}>{issueCount} issue{issueCount === 1 ? '' : 's'}</span>
+                )}
                 <span style={{ fontSize: 11, fontWeight: 600, color: '#667085' }}>{done}/{gitems.length}</span>
                 <i className="ph ph-caret-down" style={{ fontSize: 18, color: '#667085', transition: 'transform .5s ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }} />
               </div>

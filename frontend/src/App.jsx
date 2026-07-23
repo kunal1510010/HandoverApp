@@ -7,6 +7,7 @@ import Login from './screens/Login'
 import Safety from './screens/Safety'
 import NotReady from './screens/NotReady'
 import Confirm from './screens/Confirm'
+import Loading from './screens/Loading'
 import Hub from './screens/Hub'
 import Room from './screens/Room'
 import Review from './screens/Review'
@@ -18,7 +19,7 @@ const DEFAULT_META = {
   inspector_name: '',
   inspector_contact: '',
   inspection_date: '',
-  expected_resolution_date: '',
+  company: '',
   fm_name: '',
 }
 const PENDING_KEY = 'asbl_pending_save'
@@ -165,7 +166,7 @@ export default function App() {
         inspector_name: insp.meta.inspector_name || '',
         inspector_contact: insp.meta.inspector_contact || '',
         inspection_date: insp.meta.inspection_date || '',
-        expected_resolution_date: insp.meta.expected_resolution_date || '',
+        company: insp.meta.company || '',
         fm_name: insp.meta.fm_name || '',
       })
       setCustomerSigned(insp.meta.customer_signed)
@@ -246,15 +247,13 @@ export default function App() {
   // ---- confirm ----
   function beginInspection() {
     const fresh = lastSubmitted ? carryForwardResponses(unit.rooms, checklist, responses) : freshResponses(unit.rooms, checklist)
+    setScreen('loading')
     api.createInspection({ responses: fresh, meta: DEFAULT_META }).then((insp) => {
-      setInspectionId(insp.id)
-      setHasDraft(true)
-      setLastSubmitted(false)
-      setResponses(insp.responses)
-      setMeta(DEFAULT_META)
-      setCustomerSigned(false)
-      setInspectorSigned(false)
+      applyInspection(insp)
       nav('hub')
+    }).catch(() => {
+      toast_('Could not start inspection. Try again.')
+      nav('confirm')
     })
   }
 
@@ -381,10 +380,11 @@ export default function App() {
           checklist={checklist} responses={responses} onNotReady={() => nav('notready')}
           onResume={() => nav('hub')} onStart={beginInspection} onStartOver={beginInspection} />
       )}
+      {screen === 'loading' && <Loading />}
       {screen === 'hub' && unit && (
         <Hub unit={unit} checklist={checklist} responses={responses} offline={offline}
           onOpenRoom={(key) => { setActiveRoom(key); setOpenCats({}); nav('room', key) }}
-          onReview={() => nav('review')} />
+          onReview={() => nav('review')} onBack={() => nav('confirm')} />
       )}
       {screen === 'room' && unit && (
         <Room unit={unit} checklist={checklist} responses={responses} activeRoom={activeRoom}

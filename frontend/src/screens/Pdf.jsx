@@ -9,7 +9,6 @@ export default function Pdf({ unit, checklist, responses, meta, pdfVariant, cust
   const pdfHasIssues = !pdfZero && totalIssues > 0
 
   const pdfMeta = [
-    { label: 'Expected Resolution Day', value: meta.expected_resolution_date || '—' },
     { label: 'Inspected by (Engineer)', value: `${meta.inspector_name || '—'} · ${meta.inspector_contact || '—'}` },
     { label: 'Inspection Date', value: meta.inspection_date || '—' },
     { label: 'House Sq.ft', value: unit.sqft },

@@ -74,12 +74,11 @@ def _apply_meta(inspection, meta):
     # Date fields are nullable and must become None when cleared; the
     # CharFields below are non-nullable, so an empty string stays "" (setting
     # them to None trips a NOT NULL constraint on save).
-    for key in ("inspector_name", "inspector_contact", "company", "fm_name", "fm_contact"):
+    for key in ("inspector_name", "inspector_contact", "company", "fm_name"):
         if key in meta:
             setattr(inspection, key, meta[key] or "")
-    for key in ("inspection_date", "expected_resolution_date"):
-        if key in meta:
-            setattr(inspection, key, meta[key] or None)
+    if "inspection_date" in meta:
+        inspection.inspection_date = meta["inspection_date"] or None
 
 
 def _sync_responses(inspection, responses):
@@ -121,7 +120,9 @@ def inspection_draft(request):
             or Inspection.objects.filter(flat=flat, status="submitted").order_by("-updated_at").first()
         return Response(serialize_inspection(inspection) if inspection else None)
 
-    # POST: idempotent create/replace of the flat's one active draft.
+    # POST: idempotent create/replace of the flat's one active draft. Report
+    # fields left blank fall back to the flat's defaults at serialize time
+    # (see serialize_inspection), so no seeding is needed here.
     inspection, _ = Inspection.objects.get_or_create(flat=flat, status="in_progress")
     _apply_meta(inspection, request.data.get("meta") or {})
     inspection.save()
@@ -170,7 +171,7 @@ def inspection_submit(request, pk):
 
     if inspection.status != "submitted":
         has_issues = Issue.objects.filter(item_response__inspection=inspection).exists()
-        flat.status = "issues" if has_issues else "clear"
+        flat.status = "issues" if has_issues else "handed_over"
         flat.save()
         inspection.status = "submitted"
         inspection.save()
@@ -180,6 +181,11 @@ def inspection_submit(request, pk):
 
 @api_view(["GET"])
 def inspection_report(request, pk):
+    # A flat can be re-inspected, leaving older submitted Inspection rows
+    # behind; always render the newest one for the flat so a stale pk (an
+    # old bookmark, a link shared before a re-inspection) never serves a
+    # stale report.
     inspection = get_object_or_404(Inspection, pk=pk)
-    pdf_bytes = render_pdf(inspection)
+    latest = Inspection.objects.filter(flat=inspection.flat, status="submitted").order_by("-updated_at").first()
+    pdf_bytes = render_pdf(latest or inspection)
     return HttpResponse(pdf_bytes, content_type="application/pdf")

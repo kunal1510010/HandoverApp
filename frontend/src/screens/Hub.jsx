@@ -1,7 +1,7 @@
 import { ROOM_ICON, roomStat } from '../checklist'
 import asblLogo from '../assets/Nav-black-logo.svg'
 
-export default function Hub({ unit, checklist, responses, offline, onOpenRoom, onReview }) {
+export default function Hub({ unit, checklist, responses, offline, onOpenRoom, onReview, onBack }) {
   const rooms = unit.rooms
   const stats = {}
   rooms.forEach((r) => { stats[r.key] = roomStat(r, checklist, responses) })
@@ -16,12 +16,15 @@ export default function Hub({ unit, checklist, responses, offline, onOpenRoom, o
     <>
       <div style={{ padding: '18px 20px 14px', background: '#fff', borderBottom: '1px solid #EAECF0', flexShrink: 0 }}>
         <img src={asblLogo} alt="ASBL" style={{ height: 15, marginBottom: 16 }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+          <div onClick={onBack} style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid #EAECF0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+            <i className="ph ph-arrow-left" style={{ fontSize: 18 }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#667085' }}>{unit.project} · {unit.config}</div>
             <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-.02em' }}>Unit {unit.unit_no}</div>
           </div>
-          <div style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid #EAECF0', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Connectivity">
+          <div style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid #EAECF0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} title="Connectivity">
             <i className={offline ? 'ph ph-cloud-slash' : 'ph ph-wifi-high'} style={{ fontSize: 19, color: '#667085' }} />
           </div>
         </div>

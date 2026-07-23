@@ -4,7 +4,7 @@ const META_FIELDS = [
   { key: 'inspector_name', label: 'Inspected by (Engineer)', placeholder: 'Name', type: 'text' },
   { key: 'inspector_contact', label: 'Inspector contact', placeholder: 'Phone', type: 'text' },
   { key: 'inspection_date', label: 'Inspection date', type: 'date' },
-  { key: 'expected_resolution_date', label: 'Expected resolution day', type: 'date' },
+  { key: 'company', label: 'Company', placeholder: 'Optional', type: 'text' },
   { key: 'fm_name', label: 'Handover Executive (FM)', placeholder: 'Optional', type: 'text' },
 ]
 
