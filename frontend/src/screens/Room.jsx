@@ -1,14 +1,12 @@
 import { useEffect } from 'react'
 import { CAT_ICON, itemsFor, roomStat } from '../checklist'
 
-const V = { bg: '#E7F6EF', fg: '#12805A', bd: '#1FA971' }
-const R = { bg: '#FDEBD9', fg: '#B15A17', bd: '#EA7A1E' }
-const Sp = { bg: '#EEF0F3', fg: '#5A6478', bd: '#9AA3B2' }
+const verifyStyle = { flex: 1.3, height: 48, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, fontWeight: 700, cursor: 'pointer', background: '#EAF7F1', color: '#12805A', border: '1px solid #1FA971' }
 
-function btnStyle(active, palette) {
-  const base = { flex: 1, height: 44, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 13, fontWeight: 600, cursor: 'pointer' }
-  if (active) return { ...base, background: palette.bg, color: palette.fg, border: `1px solid ${palette.bd}` }
-  return { ...base, background: '#fff', color: '#667085', border: '1px solid #EAECF0' }
+function secondaryStyle(active, defaultColor, activeColor, activeBorder) {
+  const base = { flex: 1, height: 48, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', background: '#fff', border: '1px solid #EAECF0', color: defaultColor }
+  if (active) return { ...base, color: activeColor, border: `1px solid ${activeBorder}` }
+  return base
 }
 
 const STATUS_MAP = {
@@ -103,18 +101,18 @@ export default function Room({ unit, checklist, responses, activeRoom, openCats,
                   : resp === 'ISSUE' ? `${c.issues.length} issue${c.issues.length === 1 ? '' : 's'} raised`
                   : resp === 'SKIPPED' ? `Skipped${c.skip_reason ? ' · ' + c.skip_reason : ''}` : ''
                 return (
-                  <div key={m.id} style={{ background: '#fff', border: '1px solid #EAECF0', borderRadius: 14, padding: 14, marginBottom: 9 }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#667085', letterSpacing: '.01em', marginBottom: 3 }}>{m.cat} → {m.sub}</div>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: '#243044', lineHeight: 1.45, marginBottom: 12 }}>{m.text}</div>
+                  <div key={m.id} style={{ background: '#fff', border: '1px solid #EAECF0', borderRadius: 18, padding: 16, marginBottom: 10, boxShadow: '0 1px 2px rgba(16,24,40,.04)' }}>
+                    <div style={{ display: 'inline-block', fontSize: 11, fontWeight: 600, color: '#5A6478', background: '#EEF0F3', borderRadius: 9999, padding: '5px 11px', marginBottom: 10 }}>{m.sub}</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: '#1B2340', lineHeight: 1.4, letterSpacing: '-.01em', marginBottom: 14 }}>{m.text}</div>
                     {showBtns && (
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button style={btnStyle(resp === 'VERIFIED', V)} onClick={() => setResp(room.key, m.id, 'VERIFIED')}>
-                          <i className="ph ph-check-circle" style={{ fontSize: 16 }} />Verify
+                        <button style={verifyStyle} onClick={() => setResp(room.key, m.id, 'VERIFIED')}>
+                          <i className="ph-fill ph-check-circle" style={{ fontSize: 17 }} />Verify
                         </button>
-                        <button style={btnStyle(resp === 'ISSUE', R)} onClick={() => onRaise(room.key, m.id)}>
+                        <button style={secondaryStyle(resp === 'ISSUE', '#475467', '#B15A17', '#EA7A1E')} onClick={() => onRaise(room.key, m.id)}>
                           <i className="ph ph-warning" style={{ fontSize: 16 }} />Issue
                         </button>
-                        <button style={btnStyle(resp === 'SKIPPED', Sp)} onClick={() => setResp(room.key, m.id, 'SKIPPED')}>
+                        <button style={secondaryStyle(resp === 'SKIPPED', '#475467', '#5A6478', '#9AA3B2')} onClick={() => setResp(room.key, m.id, 'SKIPPED')}>
                           <i className="ph ph-arrow-right" style={{ fontSize: 16 }} />Skip
                         </button>
                       </div>
